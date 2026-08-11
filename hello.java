@@ -13,6 +13,20 @@ class Account {
     }
 }
 
+class AccountNotFoundException extends Exception {
+
+    AccountNotFoundException(String message) {
+        super(message);
+    }
+}
+
+class InsufficientFundsException extends Exception {
+
+    InsufficientFundsException(String message) {
+        super(message);
+    }
+}
+
 public class BankConsoleApp {
 
     static HashMap<Integer, Account> accounts = new HashMap<>();
@@ -21,6 +35,7 @@ public class BankConsoleApp {
     static int nextAccountId = 1001;
 
     public static void createAccount() {
+
         System.out.print("Enter customer name: ");
         String customerName = scanner.nextLine();
 
@@ -38,31 +53,101 @@ public class BankConsoleApp {
         nextAccountId++;
     }
 
+    public static void deposit(int id, double amount)
+            throws AccountNotFoundException {
+
+        if (!accounts.containsKey(id)) {
+            throw new AccountNotFoundException(
+                    "Account not found: " + id
+            );
+        }
+
+        Account account = accounts.get(id);
+
+        account.balance += amount;
+
+        System.out.println("Deposit successful!");
+        System.out.println("Current balance: ₹" + account.balance);
+    }
+
+    public static void withdraw(int id, double amount)
+            throws AccountNotFoundException, InsufficientFundsException {
+
+        if (!accounts.containsKey(id)) {
+            throw new AccountNotFoundException(
+                    "Account not found: " + id
+            );
+        }
+
+        Account account = accounts.get(id);
+
+        if (amount > account.balance) {
+            throw new InsufficientFundsException(
+                    "Insufficient funds!"
+            );
+        }
+
+        account.balance -= amount;
+
+        System.out.println("Withdrawal successful!");
+        System.out.println("Current balance: ₹" + account.balance);
+    }
+
     public static void main(String[] args) {
 
         while (true) {
 
             System.out.println("\n===== SecureBank =====");
             System.out.println("1. Create Account");
-            System.out.println("2. Exit");
+            System.out.println("2. Deposit");
+            System.out.println("3. Withdraw");
+            System.out.println("4. Exit");
 
             System.out.print("Enter choice: ");
             int choice = scanner.nextInt();
             scanner.nextLine();
 
-            switch (choice) {
+            try {
 
-                case 1:
-                    createAccount();
-                    break;
+                switch (choice) {
 
-                case 2:
-                    System.out.println("Thank you!");
-                    scanner.close();
-                    return;
+                    case 1:
+                        createAccount();
+                        break;
 
-                default:
-                    System.out.println("Invalid operation!");
+                    case 2:
+                        System.out.print("Enter Account ID: ");
+                        int depositId = scanner.nextInt();
+
+                        System.out.print("Enter amount: ");
+                        double depositAmount = scanner.nextDouble();
+
+                        deposit(depositId, depositAmount);
+                        break;
+
+                    case 3:
+                        System.out.print("Enter Account ID: ");
+                        int withdrawId = scanner.nextInt();
+
+                        System.out.print("Enter amount: ");
+                        double withdrawAmount = scanner.nextDouble();
+
+                        withdraw(withdrawId, withdrawAmount);
+                        break;
+
+                    case 4:
+                        System.out.println("Thank you!");
+                        scanner.close();
+                        return;
+
+                    default:
+                        System.out.println("Invalid operation!");
+                }
+
+            } catch (AccountNotFoundException |
+                     InsufficientFundsException e) {
+
+                System.out.println(e.getMessage());
             }
         }
     }
