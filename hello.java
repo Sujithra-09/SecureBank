@@ -34,6 +34,7 @@ public class BankConsoleApp {
 
     static int nextAccountId = 1001;
 
+    // Create Account
     public static void createAccount() {
 
         System.out.print("Enter customer name: ");
@@ -53,6 +54,7 @@ public class BankConsoleApp {
         nextAccountId++;
     }
 
+    // Deposit
     public static void deposit(int id, double amount)
             throws AccountNotFoundException {
 
@@ -70,8 +72,10 @@ public class BankConsoleApp {
         System.out.println("Current balance: ₹" + account.balance);
     }
 
+    // Withdraw
     public static void withdraw(int id, double amount)
-            throws AccountNotFoundException, InsufficientFundsException {
+            throws AccountNotFoundException,
+                   InsufficientFundsException {
 
         if (!accounts.containsKey(id)) {
             throw new AccountNotFoundException(
@@ -93,6 +97,38 @@ public class BankConsoleApp {
         System.out.println("Current balance: ₹" + account.balance);
     }
 
+    // Balance Inquiry
+    public static void balance(int id)
+            throws AccountNotFoundException {
+
+        if (!accounts.containsKey(id)) {
+            throw new AccountNotFoundException(
+                    "Account not found: " + id
+            );
+        }
+
+        Account account = accounts.get(id);
+
+        System.out.println("Account ID: " + account.id);
+        System.out.println("Customer Name: " + account.customerName);
+        System.out.println("Balance: ₹" + account.balance);
+    }
+
+    // Close Account
+    public static void closeAccount(int id)
+            throws AccountNotFoundException {
+
+        if (!accounts.containsKey(id)) {
+            throw new AccountNotFoundException(
+                    "Account not found: " + id
+            );
+        }
+
+        accounts.remove(id);
+
+        System.out.println("Account closed successfully!");
+    }
+
     public static void main(String[] args) {
 
         while (true) {
@@ -101,7 +137,9 @@ public class BankConsoleApp {
             System.out.println("1. Create Account");
             System.out.println("2. Deposit");
             System.out.println("3. Withdraw");
-            System.out.println("4. Exit");
+            System.out.println("4. Balance Inquiry");
+            System.out.println("5. Close Account");
+            System.out.println("6. Exit");
 
             System.out.print("Enter choice: ");
             int choice = scanner.nextInt();
@@ -136,7 +174,21 @@ public class BankConsoleApp {
                         break;
 
                     case 4:
-                        System.out.println("Thank you!");
+                        System.out.print("Enter Account ID: ");
+                        int balanceId = scanner.nextInt();
+
+                        balance(balanceId);
+                        break;
+
+                    case 5:
+                        System.out.print("Enter Account ID: ");
+                        int closeId = scanner.nextInt();
+
+                        closeAccount(closeId);
+                        break;
+
+                    case 6:
+                        System.out.println("Thank you for using SecureBank!");
                         scanner.close();
                         return;
 
@@ -151,4 +203,4 @@ public class BankConsoleApp {
             }
         }
     }
-}
+    }
