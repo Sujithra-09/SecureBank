@@ -1,15 +1,33 @@
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 
 class Account {
     int id;
     String customerName;
     double balance;
+    List<Transaction> transactions;
 
     Account(int id, String customerName, double balance) {
         this.id = id;
         this.customerName = customerName;
         this.balance = balance;
+        this.transactions = new ArrayList<>();
+    }
+}
+
+class Transaction {
+    String type;
+    int fromId;
+    int toId;
+    double amount;
+
+    Transaction(String type, int fromId, int toId, double amount) {
+        this.type = type;
+        this.fromId = fromId;
+        this.toId = toId;
+        this.amount = amount;
     }
 }
 
@@ -34,7 +52,6 @@ public class BankConsoleApp {
 
     static int nextAccountId = 1001;
 
-    // Create Account
     public static void createAccount() {
 
         System.out.print("Enter customer name: ");
@@ -54,7 +71,6 @@ public class BankConsoleApp {
         nextAccountId++;
     }
 
-    // Deposit
     public static void deposit(int id, double amount)
             throws AccountNotFoundException {
 
@@ -68,11 +84,14 @@ public class BankConsoleApp {
 
         account.balance += amount;
 
+        account.transactions.add(
+                new Transaction("DEPOSIT", id, id, amount)
+        );
+
         System.out.println("Deposit successful!");
         System.out.println("Current balance: ₹" + account.balance);
     }
 
-    // Withdraw
     public static void withdraw(int id, double amount)
             throws AccountNotFoundException,
                    InsufficientFundsException {
@@ -93,11 +112,14 @@ public class BankConsoleApp {
 
         account.balance -= amount;
 
+        account.transactions.add(
+                new Transaction("WITHDRAW", id, id, amount)
+        );
+
         System.out.println("Withdrawal successful!");
         System.out.println("Current balance: ₹" + account.balance);
     }
 
-    // Balance Inquiry
     public static void balance(int id)
             throws AccountNotFoundException {
 
@@ -114,7 +136,6 @@ public class BankConsoleApp {
         System.out.println("Balance: ₹" + account.balance);
     }
 
-    // Close Account
     public static void closeAccount(int id)
             throws AccountNotFoundException {
 
@@ -129,6 +150,68 @@ public class BankConsoleApp {
         System.out.println("Account closed successfully!");
     }
 
+    // Transfer money from one account to another
+    public static void transfer(int fromId, int toId, double amount)
+            throws AccountNotFoundException,
+                   InsufficientFundsException {
+
+        if (!accounts.containsKey(fromId)) {
+            throw new AccountNotFoundException(
+                    "Source account not found: " + fromId
+            );
+        }
+
+        if (!accounts.containsKey(toId)) {
+            throw new AccountNotFoundException(
+                    "Target account not found: " + toId
+            );
+        }
+
+        Account fromAccount = accounts.get(fromId);
+        Account toAccount = accounts.get(toId);
+
+        if (amount > fromAccount.balance) {
+            throw new InsufficientFundsException(
+                    "Insufficient funds in source account!"
+            );
+        }
+
+        double sourceBalanceBefore = fromAccount.balance;
+        double targetBalanceBefore = toAccount.balance;
+
+        try {
+
+            fromAccount.balance -= amount;
+            toAccount.balance += amount;
+
+            Transaction transaction =
+                    new Transaction(
+                            "TRANSFER",
+                            fromId,
+                            toId,
+                            amount
+                    );
+
+            fromAccount.transactions.add(transaction);
+            toAccount.transactions.add(transaction);
+
+            System.out.println("Transfer successful!");
+            System.out.println(
+                    "Transferred ₹" + amount +
+                    " from " + fromId +
+                    " to " + toId
+            );
+
+        } catch (Exception e) {
+
+            // Rollback both accounts
+            fromAccount.balance = sourceBalanceBefore;
+            toAccount.balance = targetBalanceBefore;
+
+            throw e;
+        }
+    }
+
     public static void main(String[] args) {
 
         while (true) {
@@ -139,7 +222,8 @@ public class BankConsoleApp {
             System.out.println("3. Withdraw");
             System.out.println("4. Balance Inquiry");
             System.out.println("5. Close Account");
-            System.out.println("6. Exit");
+            System.out.println("6. Transfer");
+            System.out.println("7. Exit");
 
             System.out.print("Enter choice: ");
             int choice = scanner.nextInt();
@@ -188,6 +272,19 @@ public class BankConsoleApp {
                         break;
 
                     case 6:
+                        System.out.print("Enter Source Account ID: ");
+                        int fromId = scanner.nextInt();
+
+                        System.out.print("Enter Target Account ID: ");
+                        int toId = scanner.nextInt();
+
+                        System.out.print("Enter amount: ");
+                        double transferAmount = scanner.nextDouble();
+
+                        transfer(fromId, toId, transferAmount);
+                        break;
+
+                    case 7:
                         System.out.println("Thank you for using SecureBank!");
                         scanner.close();
                         return;
@@ -200,7 +297,13 @@ public class BankConsoleApp {
                      InsufficientFundsException e) {
 
                 System.out.println(e.getMessage());
+
+            } catch (Exception e) {
+
+                System.out.println(
+                        "Operation failed. Transaction rolled back."
+                );
             }
         }
     }
-    }
+}
