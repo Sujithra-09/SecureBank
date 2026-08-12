@@ -150,7 +150,6 @@ public class BankConsoleApp {
         System.out.println("Account closed successfully!");
     }
 
-    // Transfer money from one account to another
     public static void transfer(int fromId, int toId, double amount)
             throws AccountNotFoundException,
                    InsufficientFundsException {
@@ -196,20 +195,81 @@ public class BankConsoleApp {
             toAccount.transactions.add(transaction);
 
             System.out.println("Transfer successful!");
-            System.out.println(
-                    "Transferred ₹" + amount +
-                    " from " + fromId +
-                    " to " + toId
-            );
 
         } catch (Exception e) {
 
-            // Rollback both accounts
             fromAccount.balance = sourceBalanceBefore;
             toAccount.balance = targetBalanceBefore;
 
             throw e;
         }
+    }
+
+    // Reverse the last transaction
+    public static void reverseLastTransaction(int id)
+            throws AccountNotFoundException {
+
+        if (!accounts.containsKey(id)) {
+            throw new AccountNotFoundException(
+                    "Account not found: " + id
+            );
+        }
+
+        Account account = accounts.get(id);
+
+        if (account.transactions.isEmpty()) {
+            System.out.println("No transaction to reverse.");
+            return;
+        }
+
+        Transaction transaction =
+                account.transactions.remove(
+                        account.transactions.size() - 1
+                );
+
+        if (transaction.type.equals("DEPOSIT")) {
+
+            account.balance -= transaction.amount;
+
+        } else if (transaction.type.equals("WITHDRAW")) {
+
+            account.balance += transaction.amount;
+
+        } else if (transaction.type.equals("TRANSFER")) {
+
+            Account fromAccount =
+                    accounts.get(transaction.fromId);
+
+            Account toAccount =
+                    accounts.get(transaction.toId);
+
+            if (fromAccount != null && toAccount != null) {
+
+                fromAccount.balance += transaction.amount;
+                toAccount.balance -= transaction.amount;
+
+                removeTransaction(
+                        fromAccount,
+                        transaction
+                );
+
+                removeTransaction(
+                        toAccount,
+                        transaction
+                );
+            }
+        }
+
+        System.out.println(
+                "Last transaction reversed successfully!"
+        );
+    }
+
+    private static void removeTransaction(
+            Account account,
+            Transaction transaction) {
+
+        account.transactions.remove(transaction);
     }
 
     public static void main(String[] args) {
@@ -223,7 +283,8 @@ public class BankConsoleApp {
             System.out.println("4. Balance Inquiry");
             System.out.println("5. Close Account");
             System.out.println("6. Transfer");
-            System.out.println("7. Exit");
+            System.out.println("7. Reverse Last Transaction");
+            System.out.println("8. Exit");
 
             System.out.print("Enter choice: ");
             int choice = scanner.nextInt();
@@ -285,6 +346,13 @@ public class BankConsoleApp {
                         break;
 
                     case 7:
+                        System.out.print("Enter Account ID: ");
+                        int reverseId = scanner.nextInt();
+
+                        reverseLastTransaction(reverseId);
+                        break;
+
+                    case 8:
                         System.out.println("Thank you for using SecureBank!");
                         scanner.close();
                         return;
@@ -301,7 +369,7 @@ public class BankConsoleApp {
             } catch (Exception e) {
 
                 System.out.println(
-                        "Operation failed. Transaction rolled back."
+                        "Operation failed."
                 );
             }
         }
